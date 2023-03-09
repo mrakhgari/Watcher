@@ -160,7 +160,7 @@ def insert_replies(session: Session):
                         tweet = sntwitter.TwitterTweetScraper(target)
                         insert_tweet(session, tweet)
                     except e:
-                        pass(f'error in target {str(e)}')
+                        print(f'error in target {str(e)}')
                         continue
                 reply_row = Models.Reply(
                     source_id = reply.id,
