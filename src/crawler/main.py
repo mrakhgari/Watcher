@@ -132,8 +132,6 @@ def get_all_conversations(session: Session):
 
 def get_replies_of_conversation(conversation: Models.Conversation , last_update: str, session: Session):
     for i,tweet in enumerate(sntwitter.TwitterSearchScraper(f'conversation_id:{conversation.conversation_id}  (filter:safe OR -filter:safe) since:{last_update}').get_items()): #declare a username 
-        if i > 2:
-            break
         if not tweet_exist(tweet.id, session):
             yield tweet
 
@@ -159,6 +157,7 @@ def insert_replies(session: Session):
                         tweet = next(sntwitter.TwitterTweetScraper(target, mode=sntwitter.TwitterTweetScraperMode.SINGLE).get_items())
                         insert_tweet(session, tweet)
                     except Exception as e:
+                        print(tweet.json())
                         print(f'error in target {str(e)}')
                         continue
                 reply_row = Models.Reply(
@@ -190,7 +189,7 @@ if __name__ == '__main__':
 
     insert_replies(session)
 
-    # update_users_last_update(session)
+    update_users_last_update(session)
 
 
 
