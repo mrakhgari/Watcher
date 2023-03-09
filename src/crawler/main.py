@@ -155,7 +155,7 @@ def insert_replies(session: Session):
 
             try:
                 target = reply.inReplyToTweetId
-                if not tweet_exist(target):
+                if not tweet_exist(target, session):
                     try:
                         tweet = sntwitter.TwitterTweetScraper(target)
                         insert_tweet(session, tweet)
