@@ -35,13 +35,13 @@ class Conversation(Base):
     tweet = relationship('Tweet')
 
 
-# class Reply(Base):
-#     __tablename__ = 'replies'
+class Reply(Base):
+    __tablename__ = 'replies'
 
-#     source_id = Column(String(32), ForeignKey('tweets.id'), primary_key=True)
-#     target_id = Column(String(32), ForeignKey('tweets.id'), primary_key=False)
-#     source = relationship('Tweet')
-#     target = relationship('Tweet')
+    source_id = Column(String(32), ForeignKey('tweets.id'), primary_key=True)
+    target_id = Column(String(32), ForeignKey('tweets.id'), primary_key=False)
+    source = relationship('Tweet', foreign_keys=[source_id])
+    target = relationship('Tweet', foreign_keys=[target_id])
 
 # class Retweet(Base):
 #     __tablename__ = 'retweets'
