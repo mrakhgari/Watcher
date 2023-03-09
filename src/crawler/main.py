@@ -185,9 +185,9 @@ if __name__ == '__main__':
     session = sessionmaker(bind=engine)()
 
     users = config.USERS.split(',')
-    # insert_users(session=session, users=users)
+    insert_users(session=session, users=users)
 
-    # insert_users_conversations(session)
+    insert_users_conversations(session)
 
     insert_replies(session)
 
