@@ -158,7 +158,7 @@ def insert_replies(session: Session):
                     try:
                         tweet = next(sntwitter.TwitterTweetScraper(target, mode=sntwitter.TwitterTweetScraperMode.SINGLE).get_items())
                         insert_tweet(session, tweet)
-                    except e:
+                    except Exception as e:
                         print(f'error in target {str(e)}')
                         continue
                 reply_row = Models.Reply(
