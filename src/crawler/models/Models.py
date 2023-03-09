@@ -26,7 +26,6 @@ class Tweet(Base):
 
 
 
-
 class Conversation(Base):
     __tablename__ = 'conversations'
 
