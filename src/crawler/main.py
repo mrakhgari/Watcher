@@ -10,6 +10,20 @@ import logging
 import datetime
 
 
+
+def insert_tweet(session: Session, tweet):
+    '''
+        insert tweet into tweets table.
+    '''
+    new_tweet = Models.Tweet(
+                    id = tweet.id,
+                    author_id = tweet.user.username,
+                    text = tweet.rawContent,
+                    create_date = tweet.date,
+                )
+    session.add(new_tweet)
+    session.commit()
+
 def get_today() -> str:
     '''
         return today date as YYYY-MM-DD format.
@@ -84,15 +98,7 @@ def insert_users_conversations(session: Session):
         for t in fetch_user_conversation(user.id, user.last_update):
             try:
                 # TODO: check time of tweet.  
-                new_tweet = Models.Tweet(
-                    id = t.id,
-                    author_id = t.user.username,
-                    text = t.rawContent,
-                    create_date = t.date,
-                )
-
-                session.add(new_tweet)
-                session.commit()
+                insert_tweet(session, t)
 
             except IntegrityError:
                 logging.warning(f'{t.id} exists!!!')
@@ -132,6 +138,9 @@ def get_replies_of_conversation(conversation: Models.Conversation , last_update:
         if not tweet_exist(tweet.id, session):
             yield tweet
 
+    
+
+
 def insert_replies(session: Session):
     # TODO: handle different last update for each user 
     try:
@@ -142,18 +151,17 @@ def insert_replies(session: Session):
     conversations : list(Models.Conversation) = get_all_conversations(session)
     for conversation in conversations:
         for reply in get_replies_of_conversation(conversation, last_update, session):
-            tweet = Models.Tweet(
-                    id = reply.id,
-                    author_id = reply.user.username,
-                    text = reply.rawContent,
-                    create_date = reply.date,
-                )
-            session.add(tweet)
-            session.commit()
+            insert_tweet(session, reply)
 
             try:
                 target = reply.inReplyToTweetId
-
+                if not tweet_exist(target):
+                    try:
+                        tweet = sntwitter.TwitterTweetScraper(target)
+                        insert_tweet(session, tweet)
+                    except e:
+                        pass(f'error in target {str(e)}')
+                        continue
                 reply_row = Models.Reply(
                     source_id = reply.id,
                     target_id = target
