@@ -10,6 +10,7 @@ import logging
 import datetime
 
 
+UNKNOWN_AUTHOR_ID = '000000000000000'
 
 def insert_tweet(session: Session, tweet):
     '''
@@ -24,6 +25,18 @@ def insert_tweet(session: Session, tweet):
     session.add(new_tweet)
     session.commit()
 
+def insert_tombstone_tweet(session: Session, tweet):
+    new_tweet = Models.Tweet(
+        id = tweet.id,
+        author_id = UNKNOWN_AUTHOR_ID,
+        text = tweet.text,
+        create_date = get_today()
+    )
+    session.add(new_tweet)
+    session.commit()
+
+
+      
 def get_today() -> str:
     '''
         return today date as YYYY-MM-DD format.
@@ -140,6 +153,8 @@ def get_replies_of_conversation(conversation: Models.Conversation , last_update:
 
 def insert_replies(session: Session):
     # TODO: handle different last update for each user 
+    # TODO: TOMBSTONE : limited view, suspend account, 
+    
     try:
         last_update = get_users(session)[0].last_update
     except Exception as e:
@@ -155,8 +170,13 @@ def insert_replies(session: Session):
                 if not tweet_exist(target, session):
                     try:
                         tweet = next(sntwitter.TwitterTweetScraper(target, mode=sntwitter.TwitterTweetScraperMode.SINGLE).get_items())
-                        insert_tweet(session, tweet)
+                        if isinstance(tweet, sntwitter.Tombstone):
+                            ## suspend or limited tweet
+                            insert_tombstone_tweet(session, tweet) 
+                        else:
+                            insert_tweet(session, tweet)
                     except Exception as e:
+                        session.rollback()
                         print(tweet.json())
                         print(f'error in target {str(e)}')
                         continue
