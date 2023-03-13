@@ -1,16 +1,62 @@
 from sqlalchemy.orm import Session
 from .models import Conversation, Tweet, Reply
+from sqlalchemy import literal
+from sqlalchemy.orm import aliased
 from directory.apps.users_app.user_db import insert_author
 import logging
 from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy import and_
 
 
 def get_conversations(username: str):
     conversations = Conversation.query.filter(Conversation.username == username).all()
     return conversations
 
-def get_conversation(username, conversation_id):
-    pass
+def get_conversation(username, conversation_id, session: Session):
+    # parameters
+    start_id = conversation_id
+    
+    # CTE definition
+    starting_replies = (session.query(Reply, literal(0).label("level"))
+        .filter(Reply.target_id == start_id)
+        .cte(recursive=True)
+    )
+
+    parent = aliased(starting_replies, name="parent")
+    child = aliased(Reply, name="child")
+
+    joined = (session.query(child, (parent.c.level + 1).label("level"))
+        .filter(child.target_id == parent.c.source_id)
+    )
+
+    cte = parent.union_all(joined)
+    result = {}
+
+    for entry in session.query(cte).order_by(cte.c.target_id, cte.c.source_id, cte.c.level):
+        row = result.get(entry[1])
+        if not row:
+            row = {}
+        if not row.get('tweet'):
+            tweet = Tweet.query.filter(Tweet.id == entry[1]).first()
+            row['tweet'] = {
+                'id': tweet.id,
+                'author_username': tweet.author_username,
+                'text': tweet.text,
+                'create_date': tweet.create_date,
+                'sentiment_score': tweet.sentiment_score,
+                'is_tombstone': tweet.is_tombstone,
+                'author': {
+                    'id': tweet.author.id,
+                    'username': tweet.author.username,
+                    'image_url': tweet.author.image_url
+                }
+            }
+        if not row.get('replies'):
+            row['replies'] = []
+        row['replies'].append(entry[0])
+        result[entry[1]] = row
+
+    return result
 
 def create_tweet(args, session: Session):
     try:

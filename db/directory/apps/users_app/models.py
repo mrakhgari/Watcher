@@ -4,11 +4,6 @@ from sqlalchemy.orm import relationship
 import datetime as dt
 from sqlalchemy.orm import validates 
 
-def calc_sentiment_score(context):
-    # return context.get_current_parameters()['text'] 
-    return 0.0
-
-
 class Author(db.Model):
     __tablename__ = 'authors'
 

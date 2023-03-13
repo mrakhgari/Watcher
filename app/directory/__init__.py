@@ -14,7 +14,7 @@ def get_users():
                         
 
 @app.route('/tweets/<string:username>/', methods=["GET"])
-def get_conversation(username):
+def get_conversations(username):
     response = requests.get(f'{configs.DB_API_URL}/tweets/conversations/{username}/')
     return response.json(), response.status_code
 

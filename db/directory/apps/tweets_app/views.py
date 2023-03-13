@@ -38,8 +38,9 @@ def get_conversations(username):
 
 @tweets.route('/conversations/<string:username>/<string:conversation_id>', methods=['GET'])
 def get_conversation(username, conversation_id):
-    conversation = tweet_db.get_conversation(username, conversation_id)
+    tweets = tweet_db.get_conversation(username, conversation_id, db.session)
     
+    return tweets
 
 
 @tweets.route('/conversations/', methods=['POST'])
