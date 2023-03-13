@@ -1,4 +1,4 @@
-# import sched, time
+import sched, time
 from models import Models
 import config 
 from sqlalchemy import create_engine
@@ -50,11 +50,11 @@ def get_tomorrow() -> str:
     '''
     return (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 
-# def do_something(scheduler): 
-#     # schedule the next call first
-#     scheduler.enter(60, 1, do_something, (scheduler,))
-#     print("Doing stuff...")
-#     # then do your stuff
+def do_something(scheduler): 
+    # schedule the next call first
+    scheduler.enter(60, 1, do_something, (scheduler,))
+    print("Doing stuff...")
+    # then do your stuff
 
 def tweet_exist(tweet_id: str, session: Session):
     '''
@@ -193,19 +193,20 @@ def insert_replies(session: Session):
 
 
 if __name__ == '__main__':
-    # my_scheduler = sched.scheduler(time.time, time.sleep)
-    # my_scheduler.enter(60, 1, do_something, (my_scheduler,))
-    # my_scheduler.run()
+    my_scheduler = sched.scheduler(time.time, time.sleep)
+    do_something(my_scheduler)
+    my_scheduler.enter(60, 1, do_something, (my_scheduler,))
+    my_scheduler.run()
     
-    engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
-    Models.Base.metadata.create_all(engine, checkfirst=True)
+    # engine = create_engine(config.SQLALCHEMY_DATABASE_URI)
+    # Models.Base.metadata.create_all(engine, checkfirst=True)
 
-    session = sessionmaker(bind=engine)()
+    # session = sessionmaker(bind=engine)()
 
-    users = config.USERS.split(',')
-    insert_users(session=session, users=users)
+    # users = config.USERS.split(',')
+    # insert_users(session=session, users=users)
 
-    insert_users_conversations(session)
+    # insert_users_conversations(session)
 
     insert_replies(session)
 
