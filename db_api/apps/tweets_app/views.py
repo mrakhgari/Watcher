@@ -7,7 +7,7 @@ from flask import request
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 
-@tweets.route('/conversations/<string:username>', methods=['GET'])
+@tweets.route('/conversations/<string:username>/', methods=['GET'])
 def get_conversations(username):
     '''
         return all of conversations of an user.
@@ -18,11 +18,20 @@ def get_conversations(username):
         return {'message': 'There is no conversation for this user!'}, status.HTTP_404_NOT_FOUND
     
     conversations = [{
-        'id': conversation.tweet.id,
-        'author_username': conversation.tweet.author_username,
-        'text': conversation.tweet.text,
-        'create_date': conversation.tweet.create_date,
-        'sentiment_score': conversation.tweet.sentiment_score
+        'conversation_id': conversation.conversation_id,
+        'tweet':{
+            'id': conversation.tweet.id,
+            'author_username': conversation.tweet.author_username,
+            'text': conversation.tweet.text,
+            'create_date': conversation.tweet.create_date,
+            'sentiment_score': conversation.tweet.sentiment_score,
+            'is_tombstone': conversation.tweet.is_tombstone,
+            'author': {
+                'id': conversation.tweet.author.id,
+                'username': conversation.tweet.author.username,
+                'image_url': conversation.tweet.author.image_url
+            }
+        }
     } for conversation in conversations]
 
     return {'data': conversations}, status.HTTP_200_OK
@@ -55,6 +64,7 @@ def create_conversation():
                 'id': conversation.tweet.id,
                 'text' : conversation.tweet.text,
                 'sentiment_score': conversation.tweet.sentiment_score,
+                'is_tombstone': conversation.tweet.is_tombstone,
                 'author': {
                     'id': conversation.tweet.author.id,
                     'username': conversation.tweet.author.username,
@@ -65,7 +75,7 @@ def create_conversation():
     }, status.HTTP_201_CREATED
 
 
-@tweets.route('/replies', methods=['POST'])
+@tweets.route('/replies/', methods=['POST'])
 @json_only
 def create_reply():
     '''
@@ -75,21 +85,23 @@ def create_reply():
 
     try:
         reply = tweet_db.create_reply(args, db.session)
-    except IntegrityError:
+    except IntegrityError as e:
         db.session.rollback()
+        print(str(e))
         return {'message': f'There is a Reply row with source ID {args.get("source_id")}  and target ID {args.get("target_id")}.'}, status.HTTP_400_BAD_REQUEST
-    except OperationalError:
+    except OperationalError as e:
         db.session.rollback()
+        print(str(e))
         return {'message': f'Please enter the full of information!'}, status.HTTP_400_BAD_REQUEST
     except ValueError as e:
         db.session.rollback()
         return {'message': str(e)}
     return {
         'data': {
-            'source': reply.source,
-            'username': reply.target
+            'source': reply.source_id,
+            'username': reply.target_id
         }
-    }
+    }, status.HTTP_201_CREATED
 
 
 @tweets.route('/', methods=['POST'])

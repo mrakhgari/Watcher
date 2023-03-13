@@ -1,5 +1,5 @@
 from db_api import db
-from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Float
+from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates 
 
@@ -16,17 +16,8 @@ class Tweet(db.Model):
     text = Column('text', Text(), nullable=False)
     create_date = Column('create_date', DateTime(), nullable=False)
     sentiment_score = Column('sentiment_score', Float, nullable=False, default=calc_sentiment_score, onupdate=calc_sentiment_score)
-
+    is_tombstone = Column('is_tombstone', Boolean, default=False)
     author = relationship('Author', back_populates='tweets')
-
-    @validates('create_date')
-    def validate_create_date(self, key, value):
-        if value:
-            try:
-                print(f' value is {value}')
-            except ValueError:
-                raise ValueError("Please Enter valid datetime format!")
-        return value
 
 class Conversation(db.Model):    
     __tablename__ = 'conversations'

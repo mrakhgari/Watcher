@@ -1,85 +1,9 @@
-import requests
+from Caller import Caller
 import snscrape.modules.twitter as sntwitter
 import configs
 import logging
 import utils
-
-class Caller:
-    def __init__(self, base_url) -> None:
-        self.url = base_url
-
-    def create_user(self, user):
-        '''
-            call request to create a new user.
-        '''
-        response = requests.post(self.url+'/users/', json={
-            'username': user.username,
-            'id': user.id,
-            'image_url': user.profileImageUrl,
-            'last_update': configs.START_DATE
-        })
-
-        return response
-    
-
-    def create_tweet(self, tweet):
-        '''
-            Create new tweet object.
-        '''
-        data  = {
-            'user': {
-                'id' : tweet.user.id,
-                'username' : tweet.user.username,
-                'image_url' : tweet.user.profileImageUrl
-            },
-            'id': tweet.id,
-            'text': tweet.rawContent,
-            'create_date': tweet.date.strftime('%Y-%m-%d %H:%M:%S')
-        }
-
-        response = requests.post(f'{self.url}/tweets/', json=data)
-
-        return response
-
-    def create_conversation(self, tweet):
-        data = {
-            'tweet': {
-                'id': tweet.id,
-                'text': tweet.rawContent,
-                'create_date': tweet.date.strftime('%Y-%m-%d %H:%M:%S'),
-                'user': {
-                    'id' : tweet.user.id,
-                    'username' : tweet.user.username,
-                    'image_url' : tweet.user.profileImageUrl
-                }
-            }, 
-            'conversation_id': tweet.conversationId,
-            'username': tweet.user.username
-        }
-        response = requests.post(f'{self.url}/tweets/conversations/', json=data)
-        return response
-
-    def insert_conversation(self, tweet):
-        '''
-            Create new conversation. 
-        '''
-
-        data = {
-            'conversation_id': tweet.conversationId,
-            'username': tweet.user.username
-        }
-
-        response = requests.post(f'{self.url}/tweets/conversations', json=data)
-        return response
-
-    def get_users(self):
-        '''
-            Get all candidate users.
-        '''
-        response = requests.get(self.url + '/users/')
-        if response.status_code == 200:
-            return response.json().get('data')
-        return None
+from snscrape.base import ScraperException
 
 def fetch_user(username):
     '''
@@ -112,18 +36,55 @@ def insert_conversations(users: list, caller: Caller):
     '''
     for user in users:
         for t in fetch_user_conversation(user):
-            response = caller.create_conversation(t)
-            if response.status_code != 201:
-                logging.warning(f'Couldn\'t insert conversation, cause {response.content}')
-            else: 
-                logging.info(f'conversation inserted! {response.json().get("data").get("conversation_id")}')
+            try:
+                response = caller.create_conversation(t)
+                if response.status_code != 201:
+                    logging.warning(f'Couldn\'t insert conversation, cause {response.content}')
+                else: 
+                    logging.info(f'conversation inserted! {response.json().get("data").get("conversation_id")}')
+            except ScraperException:
+                logging.warning(f'ScraperException in inserting conversations {t.id}!')
 
+def get_replies_of_conversation(conversation, last_update):
+    try:
+        for _,tweet in enumerate(sntwitter.TwitterSearchScraper(f'conversation_id:{conversation.get("conversation_id")}  (filter:safe OR -filter:safe) since:{last_update}').get_items()): #declare a username 
+            yield tweet
+    except ScraperException:
+        logging.warning(f'ScraperEXception in fetching replies of a conversation {conversation.get("conversation_id")}')
 
+def insert_replies(users: list, caller: Caller):
+    for user in users:
+        last_update = user.get('last_update')
+        username = user.get("username")
+        print(f'getting conversations of {username}')
+        conversations = caller.get_conversations(username) 
+        print(f'conversation count {len(conversations)}')
+        for conversation in conversations:
+            print(f'in conversation {conversation.get("conversation_id")}')
+            for reply in get_replies_of_conversation(conversation, last_update):
+                try:
+                    target_id = reply.inReplyToTweetId
+                    items =sntwitter.TwitterTweetScraper(target_id, mode=sntwitter.TwitterTweetScraperMode.SINGLE).get_items()
+                    target_tweet = next(items)
+                    response = caller.create_tweet(target_tweet)
+                    if response.status_code != 201:
+                        logging.warning(f'Failed inserting tweet, cause {response.content}')
+        
+                    response = caller.create_reply(reply)
+                    if response.status_code != 201:
+                        logging.warning(f'Failed inserting reply, cause {response.content}')
+                except ScraperException:
+                    logging.warning(f'ScraperException in fetching reply {reply.id}')
+                    continue
+                except StopIteration: 
+                    logging.warning(f'There is no tweet with id {target_id}')
+                    print(items)
+                    print(target_id)
 if __name__ == '__main__':
     usernames = configs.USERS.split(',')
     caller = Caller('http://localhost:5000')
     print('in insert users!!!')
-    insert_users(usernames, caller)
+    # insert_users(usernames, caller)
     print('users inserted!')
     users = caller.get_users()
     print('getting users')
@@ -131,4 +92,6 @@ if __name__ == '__main__':
         logging.error("Can't fetch users!")
         exit(-1)
     print('users got')
-    insert_conversations(users, caller)
+    # insert_conversations(users, caller)
+    print('conversations inserted')
+    insert_replies(users, caller)

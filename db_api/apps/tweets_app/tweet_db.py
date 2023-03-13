@@ -43,6 +43,11 @@ def create_conversation(args, session: Session ):
     return new_conversation
 
 def create_reply(args, session: Session):
+    try:
+        _ = create_tweet(args.get('tweet'), session)
+    except IntegrityError:
+        session.rollback()
+        pass
     new_reply = Reply(
         source_id = args.get('source_id'),
         target_id = args.get('target_id')

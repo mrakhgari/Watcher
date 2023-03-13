@@ -20,7 +20,7 @@ def create_user():
     try:
         _ = user_db.insert_author(args, db.session)
     except IntegrityError: 
-        logging.warn(f'Duplicated author with username {args.get("username")}!') 
+        logging.warning(f'Duplicated author with username {args.get("username")}!') 
         db.session.rollback()
 
     try:
@@ -101,3 +101,6 @@ def get_author(username):
             'image_url': author.image_url
         }
     }
+
+# @users.route('/last_update/', methods=['GET'])
+# def get_last_update():
