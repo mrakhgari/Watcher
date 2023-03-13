@@ -102,5 +102,13 @@ def get_author(username):
         }
     }
 
-# @users.route('/last_update/', methods=['GET'])
-# def get_last_update():
+@users.route('/last_update/', methods=['PATCH'])
+@json_only
+def update_last_update():
+    args = request.get_json()
+    try:
+        user_db.update_last_update(args.get("last_update"), db.session)
+        return '', status.HTTP_204_NO_CONTENT
+    except:
+        db.session.rollback()
+        return {'message': 'An error occurred in updating last_update'}, status.HTTP_400_BAD_REQUEST

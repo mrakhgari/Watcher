@@ -38,3 +38,10 @@ def get_users():
 def get_author(username):
     author = Author.query.filter(or_(Author.id == username, Author.username == username)).first()
     return author
+
+def update_last_update(last_update, session: Session):
+    users = User.query.all()
+    for user in users:
+        user.last_update = last_update
+        session.commit()
+        session.refresh(user)

@@ -67,20 +67,14 @@ class Caller:
         }
         response = requests.post(f'{self.url}/tweets/conversations/', json=data)
         return response
-
-    # def insert_conversation(self, tweet):
-    #     '''
-    #         Create new conversation. 
-    #     '''
-
-    #     data = {
-    #         'conversation_id': tweet.conversationId,
-    #         'username': tweet.user.username
-    #     }
-
-    #     response = requests.post(f'{self.url}/tweets/conversations', json=data)
-    #     return response
     
+    def update_last_update(self, date):
+        data = {
+            'last_update': date
+        }
+        response = requests.patch(f'{self.url}/users/last_update/', json=data)
+        return response
+
     def create_reply(self, tweet):
     
         if isinstance(tweet, sntwitter.Tombstone):

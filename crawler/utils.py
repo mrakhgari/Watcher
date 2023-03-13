@@ -10,6 +10,14 @@ def get_today() -> str:
     return datetime.date.today().strftime('%Y-%m-%d')
 
 
+
+def get_tomorrow() -> str:
+    '''
+        return tomorrow as YYYY-MM-DD format.
+    '''
+    return (datetime.date.today() + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+
+
 def get_unknown_user() -> dict:
     return {
         'id': 000000000000000,

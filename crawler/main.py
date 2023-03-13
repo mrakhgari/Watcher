@@ -23,7 +23,7 @@ def insert_users(usernames: list, caller: Caller):
             logging.warning(response.content)
 
 def fetch_user_conversation(user: dict):
-    for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f'from:{user.get("username")} since:{user.get("last_update")} until:{utils.get_today()}').get_items()):
+    for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f'from:{user.get("username")} since:{user.get("last_update")} until:{utils.get_tomorrow()}').get_items()):
         # TODO: quotedTweet should add to the retweet table.
         # TODO: add media part to table.    
         ## check it's conversation root
@@ -78,8 +78,11 @@ def insert_replies(users: list, caller: Caller):
                     continue
                 except StopIteration: 
                     logging.warning(f'There is no tweet with id {target_id}')
-                    print(items)
-                    print(target_id)
+
+def update_last_update(caller: Caller):
+    caller.update_last_update(utils.get_today())
+    
+
 if __name__ == '__main__':
     usernames = configs.USERS.split(',')
     caller = Caller('http://localhost:5000')
@@ -94,4 +97,7 @@ if __name__ == '__main__':
     print('users got')
     # insert_conversations(users, caller)
     print('conversations inserted')
-    insert_replies(users, caller)
+    # insert_replies(users, caller)
+    print('replies inserted!')
+    update_last_update()
+
