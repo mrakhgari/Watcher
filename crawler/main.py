@@ -1,3 +1,4 @@
+import sched, time
 from Caller import Caller
 import snscrape.modules.twitter as sntwitter
 import configs
@@ -58,9 +59,7 @@ def insert_replies(users: list, caller: Caller):
         username = user.get("username")
         print(f'getting conversations of {username}')
         conversations = caller.get_conversations(username) 
-        print(f'conversation count {len(conversations)}')
         for conversation in conversations:
-            print(f'in conversation {conversation.get("conversation_id")}')
             for reply in get_replies_of_conversation(conversation, last_update):
                 try:
                     target_id = reply.inReplyToTweetId
@@ -82,22 +81,27 @@ def insert_replies(users: list, caller: Caller):
 def update_last_update(caller: Caller):
     caller.update_last_update(utils.get_today())
     
+def update_tables(scheduler, caller):
+    insert_conversations(users, caller)
+    print('conversations inserted')
+    insert_replies(users, caller)
+    print('replies inserted!')
+    update_last_update(caller)
+
+    scheduler.enter(60*60*12, 1, update_tables, (scheduler, caller))
+
+
 
 if __name__ == '__main__':
+    my_scheduler = sched.scheduler(time.time, time.sleep)
     usernames = configs.USERS.split(',')
     caller = Caller('http://localhost:5000')
-    print('in insert users!!!')
-    # insert_users(usernames, caller)
-    print('users inserted!')
+    insert_users(usernames, caller)
     users = caller.get_users()
-    print('getting users')
     if not users:
         logging.error("Can't fetch users!")
         exit(-1)
-    print('users got')
-    # insert_conversations(users, caller)
-    print('conversations inserted')
-    # insert_replies(users, caller)
-    print('replies inserted!')
-    update_last_update()
+    update_tables(my_scheduler, caller)
+    my_scheduler.run()
 
+    

@@ -2,11 +2,13 @@ from db_api import db
 from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates 
+from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
 
 def calc_sentiment_score(context):
-    # return context.get_current_parameters()['text'] 
-    return 0.0
+    analyzer = SentimentIntensityAnalyzer()
+    text = context.get_current_parameters()['text'] 
+    return analyzer.polarity_scores(text).get("compound")
 
 class Tweet(db.Model):
     __tablename__ = 'tweets' 

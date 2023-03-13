@@ -14,19 +14,9 @@ db = SQLAlchemy(app, session_options={"autoflush": False})
 migrate = Migrate(app, db)
 
 
-@app.route('/')
-def hello_world():
-    return {'message' : "Welcome To Ziriland!"}
-
-
 
 from db_api.apps.users_app import users
 from db_api.apps.tweets_app import tweets
 
-# from directory.apps.users_app import users
-# from directory.apps.subscriptions_app import subscriptions
-# from directory.apps.servers_app import servers
-
 app.register_blueprint(users)
 app.register_blueprint(tweets)
-# app.register_blueprint(servers)
