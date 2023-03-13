@@ -95,7 +95,7 @@ def update_tables(scheduler, caller):
 if __name__ == '__main__':
     my_scheduler = sched.scheduler(time.time, time.sleep)
     usernames = configs.USERS.split(',')
-    caller = Caller('http://localhost:5000')
+    caller = Caller(configs.DB_API_URL)
     insert_users(usernames, caller)
     users = caller.get_users()
     if not users:

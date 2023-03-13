@@ -1,4 +1,4 @@
-from db_api import db
+from directory import db
 from sqlalchemy import Column, String, Date, Text, ForeignKey
 from sqlalchemy.orm import relationship
 import datetime as dt

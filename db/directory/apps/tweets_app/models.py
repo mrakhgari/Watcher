@@ -1,4 +1,4 @@
-from db_api import db
+from directory import db
 from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.orm import validates 

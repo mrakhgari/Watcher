@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate 
 
 
-from db_api.configs import Production
+from directory.configs import Production
 
 
 app = Flask(__name__)
@@ -15,8 +15,8 @@ migrate = Migrate(app, db)
 
 
 
-from db_api.apps.users_app import users
-from db_api.apps.tweets_app import tweets
+from directory.apps.users_app import users
+from directory.apps.tweets_app import tweets
 
 app.register_blueprint(users)
 app.register_blueprint(tweets)

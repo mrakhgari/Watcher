@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 from .models import Conversation, Tweet, Reply
-from db_api.apps.users_app.user_db import insert_author
+from directory.apps.users_app.user_db import insert_author
 import logging
 from sqlalchemy.exc import IntegrityError, OperationalError
 
@@ -8,6 +8,9 @@ from sqlalchemy.exc import IntegrityError, OperationalError
 def get_conversations(username: str):
     conversations = Conversation.query.filter(Conversation.username == username).all()
     return conversations
+
+def get_conversation(username, conversation_id):
+    pass
 
 def create_tweet(args, session: Session):
     try:

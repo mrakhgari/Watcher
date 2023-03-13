@@ -1,8 +1,8 @@
 from . import tweets
 from . import tweet_db
-from db_api import db 
-from db_api import status
-from db_api.utils.request import json_only
+from directory import db 
+from directory import status
+from directory.utils.request import json_only
 from flask import request
 from sqlalchemy.exc import IntegrityError, OperationalError
 
@@ -35,6 +35,12 @@ def get_conversations(username):
     } for conversation in conversations]
 
     return {'data': conversations}, status.HTTP_200_OK
+
+@tweets.route('/conversations/<string:username>/<string:conversation_id>', methods=['GET'])
+def get_conversation(username, conversation_id):
+    conversation = tweet_db.get_conversation(username, conversation_id)
+    
+
 
 @tweets.route('/conversations/', methods=['POST'])
 @json_only

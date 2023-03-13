@@ -1,8 +1,8 @@
 from . import users 
 from . import user_db
-from db_api import db 
-from db_api import status
-from db_api.utils.request import json_only
+from directory import db 
+from directory import status
+from directory.utils.request import json_only
 from flask import request
 from sqlalchemy.exc import IntegrityError, OperationalError
 
