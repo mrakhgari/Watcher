@@ -1,5 +1,5 @@
 from db_api import db
-from sqlalchemy import Column, String, Date, Text, ForeignKey, DateTime, Float
+from sqlalchemy import Column, String, Date, Text, ForeignKey
 from sqlalchemy.orm import relationship
 import datetime as dt
 from sqlalchemy.orm import validates 
@@ -32,14 +32,3 @@ class User(db.Model):
             except ValueError:
                 raise ValueError('Incorrect date format, should be YYY-MM-DD')
         return value
-
-class Tweet(db.Model):
-    __tablename__ = 'tweets' 
-    
-    id = Column('id', String(32), unique= True, primary_key=True)
-    author_id =  Column('author_id', String(32), ForeignKey('authors.username'), unique=False, nullable=False)
-    text = Column('text', Text(), nullable=False)
-    create_date = Column('create_date', DateTime(), nullable=False)
-    sentiment_score = Column('sentiment_score', Float, nullable=False, default=calc_sentiment_score, onupdate=calc_sentiment_score)
-
-    author = relationship('Author', back_populates='tweets')

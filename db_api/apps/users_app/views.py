@@ -1,10 +1,11 @@
 from . import users 
-from db_api import db 
-from flask import request
 from . import user_db
-from sqlalchemy.exc import IntegrityError, OperationalError
-from db_api.utils.request import json_only
+from db_api import db 
 from db_api import status
+from db_api.utils.request import json_only
+from flask import request
+from sqlalchemy.exc import IntegrityError, OperationalError
+
 import logging
 
 
