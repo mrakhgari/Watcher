@@ -7,7 +7,7 @@ from flask import request
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 
-@tweets.route('/<string:username>', methods=['GET'])
+@tweets.route('/conversations/<string:username>', methods=['GET'])
 def get_conversations(username):
     '''
         return all of conversations of an user.
@@ -27,7 +27,7 @@ def get_conversations(username):
 
     return {'data': conversations}, status.HTTP_200_OK
 
-@tweets.route('/', methods=['POST'])
+@tweets.route('/conversations/', methods=['POST'])
 @json_only
 def create_conversation():
     '''
@@ -39,17 +39,30 @@ def create_conversation():
         conversation = tweet_db.create_conversation(args, db.session)
     except IntegrityError:
         db.session.rollback()
-        return {'message': f'There is a conversation with ID {args.get("id")}  for user {args.get("username")}.'}, status.HTTP_400_BAD_REQUEST
-    except OperationalError:
+        return {'message': f'There is a conversation with ID {args.get("conversation_id")}  for user {args.get("username")}.'}, status.HTTP_400_BAD_REQUEST
+    except OperationalError as e:
         db.session.rollback()
-        return {'message': f'Please enter the full of information!'}, status.HTTP_400_BAD_REQUEST
-    
+        return {'message': f'Please enter the full of information! {str(e)}'}, status.HTTP_400_BAD_REQUEST
+    except ValueError as e:
+        db.session.rollback()
+        return {'message': str(e)}
+
     return {
         'data': {
-            'id': conversation.id,
-            'username': conversation.username
+            'conversation_id': conversation.conversation_id,
+            'username': conversation.username,
+            'tweet': {
+                'id': conversation.tweet.id,
+                'text' : conversation.tweet.text,
+                'sentiment_score': conversation.tweet.sentiment_score,
+                'author': {
+                    'id': conversation.tweet.author.id,
+                    'username': conversation.tweet.author.username,
+                    'image_url': conversation.tweet.author.image_url
+                }
+            }
         }
-    }
+    }, status.HTTP_201_CREATED
 
 
 @tweets.route('/replies', methods=['POST'])
@@ -68,11 +81,48 @@ def create_reply():
     except OperationalError:
         db.session.rollback()
         return {'message': f'Please enter the full of information!'}, status.HTTP_400_BAD_REQUEST
-    
+    except ValueError as e:
+        db.session.rollback()
+        return {'message': str(e)}
     return {
         'data': {
             'source': reply.source,
             'username': reply.target
         }
     }
+
+
+@tweets.route('/', methods=['POST'])
+@json_only
+def create_tweet():
+    '''
+        create new tweet row in table.
+    '''
+    args = request.get_json()
+    try:
+        new_tweet = tweet_db.create_tweet(args, db.session)
+    except IntegrityError:
+        db.session.rollback()
+        return {'message': f'There is a Tweet row with ID {args.get("id")}'}, status.HTTP_400_BAD_REQUEST
+    except OperationalError as e:
+        db.session.rollback()
+        print(str(e))
+        return {'message': f'Please enter the full of information!'}, status.HTTP_400_BAD_REQUEST
+    except ValueError as e:
+        db.session.rollback()
+        return {'message': str(e)}
+
+    
+    return {
+        'data': {
+            'id': new_tweet.id,
+            'text' : new_tweet.text,
+            'sentiment_score': new_tweet.sentiment_score,
+            'author': {
+                'id': new_tweet.author.id,
+                'username': new_tweet.author.username,
+                'image_url': new_tweet.author.image_url
+            }
+        }
+    }, status.HTTP_201_CREATED
 

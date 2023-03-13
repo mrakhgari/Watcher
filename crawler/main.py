@@ -26,8 +26,51 @@ class Caller:
         '''
             Create new tweet object.
         '''
-        pass
+        data  = {
+            'user': {
+                'id' : tweet.user.id,
+                'username' : tweet.user.username,
+                'image_url' : tweet.user.profileImageUrl
+            },
+            'id': tweet.id,
+            'text': tweet.rawContent,
+            'create_date': tweet.date.strftime('%Y-%m-%d %H:%M:%S')
+        }
 
+        response = requests.post(f'{self.url}/tweets/', json=data)
+
+        return response
+
+    def create_conversation(self, tweet):
+        data = {
+            'tweet': {
+                'id': tweet.id,
+                'text': tweet.rawContent,
+                'create_date': tweet.date.strftime('%Y-%m-%d %H:%M:%S'),
+                'user': {
+                    'id' : tweet.user.id,
+                    'username' : tweet.user.username,
+                    'image_url' : tweet.user.profileImageUrl
+                }
+            }, 
+            'conversation_id': tweet.conversationId,
+            'username': tweet.user.username
+        }
+        response = requests.post(f'{self.url}/tweets/conversations/', json=data)
+        return response
+
+    def insert_conversation(self, tweet):
+        '''
+            Create new conversation. 
+        '''
+
+        data = {
+            'conversation_id': tweet.conversationId,
+            'username': tweet.user.username
+        }
+
+        response = requests.post(f'{self.url}/tweets/conversations', json=data)
+        return response
 
     def get_users(self):
         '''
@@ -56,7 +99,7 @@ def insert_users(usernames: list, caller: Caller):
             logging.warning(response.content)
 
 def fetch_user_conversation(user: dict):
-    for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f'from:{user.username} since:{user.last_update} until:{utils.get_today()}').get_items()):
+    for _, tweet in enumerate(sntwitter.TwitterSearchScraper(f'from:{user.get("username")} since:{user.get("last_update")} until:{utils.get_today()}').get_items()):
         # TODO: quotedTweet should add to the retweet table.
         # TODO: add media part to table.    
         ## check it's conversation root
@@ -69,36 +112,23 @@ def insert_conversations(users: list, caller: Caller):
     '''
     for user in users:
         for t in fetch_user_conversation(user):
-            tweet = caller.create_tweet(t)
-            if not tweet:
-                logging.warning(f'{tweet.id} exists!')
-            
-            # try:
-            #     # TODO: check time of tweet.  
-            #     insert_tweet(session, t)
-
-            # except IntegrityError:
-            #     logging.warning(f'{t.id} exists!!!')
-            #     session.rollback()
-            
-            # try:            
-            #     conversation = Models.Conversation(user_id = t.user.username,
-            #                                 conversation_id = t.conversationId)
-            #     session.add(conversation)
-            #     session.commit()
-            # except IntegrityError:
-            #     logging.warning(f'{t.id} exists!!!')
-            #     session.rollback()
-
+            response = caller.create_conversation(t)
+            if response.status_code != 201:
+                logging.warning(f'Couldn\'t insert conversation, cause {response.content}')
+            else: 
+                logging.info(f'conversation inserted! {response.json().get("data").get("conversation_id")}')
 
 
 if __name__ == '__main__':
     usernames = configs.USERS.split(',')
     caller = Caller('http://localhost:5000')
+    print('in insert users!!!')
     insert_users(usernames, caller)
+    print('users inserted!')
     users = caller.get_users()
+    print('getting users')
     if not users:
         logging.error("Can't fetch users!")
         exit(-1)
-    
+    print('users got')
     insert_conversations(users, caller)

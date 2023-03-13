@@ -1,6 +1,7 @@
 from db_api import db
 from sqlalchemy import Column, String, Text, ForeignKey, DateTime, Float
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm import validates 
 
 
 def calc_sentiment_score(context):
@@ -18,12 +19,20 @@ class Tweet(db.Model):
 
     author = relationship('Author', back_populates='tweets')
 
+    @validates('create_date')
+    def validate_create_date(self, key, value):
+        if value:
+            try:
+                print(f' value is {value}')
+            except ValueError:
+                raise ValueError("Please Enter valid datetime format!")
+        return value
 
 class Conversation(db.Model):    
     __tablename__ = 'conversations'
 
-    username = Column(String(32), ForeignKey('users.username'), primary_key=True)
-    conversation_id = Column(String(32), ForeignKey('tweets.id'), primary_key=True)
+    username = Column("username", String(32), ForeignKey('users.username'), primary_key=True)
+    conversation_id = Column("conversation_id", String(32), ForeignKey('tweets.id'), primary_key=True)
     user = relationship('User')
     tweet = relationship('Tweet')
 
