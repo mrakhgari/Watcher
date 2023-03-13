@@ -42,6 +42,10 @@ def get_conversation(username, conversation_id):
     
     return tweets
 
+@tweets.route('/audience/<string:username>/', methods=['GET'])
+def get_audiences(username):
+    audiences = tweet_db.get_audiences(username,db.session)
+    return audiences
 
 @tweets.route('/conversations/', methods=['POST'])
 @json_only

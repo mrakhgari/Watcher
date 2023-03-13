@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from .models import Conversation, Tweet, Reply
+from directory.apps.users_app.models import Author
 from sqlalchemy import literal
 from sqlalchemy.orm import aliased
 from directory.apps.users_app.user_db import insert_author
@@ -58,6 +59,38 @@ def get_conversation(username, conversation_id, session: Session):
 
     return result
 
+def get_audiences(username: str, session: Session):
+    conversations =Conversation.query.filter(Conversation.username == username).all()
+    result = {}
+
+    for conv in conversations:
+        start_id = conv.conversation_id
+    
+        # CTE definition
+        starting_replies = (session.query(Reply, literal(0).label("level"))
+            .filter(Reply.target_id == start_id)
+            .cte(recursive=True)
+        )
+
+        parent = aliased(starting_replies, name="parent")
+        child = aliased(Reply, name="child")
+
+        joined = (session.query(child, (parent.c.level + 1).label("level"))
+            .filter(child.target_id == parent.c.source_id)
+        )
+
+        cte = parent.union_all(joined)
+
+        for entry in session.query(cte).order_by(cte.c.target_id, cte.c.source_id, cte.c.level):
+            tweet = Tweet.query.filter(Tweet.id == entry[0]).first()
+            author = tweet.author
+            result[tweet.author_username] = {
+                'id': author.id,
+                'username': author.username,
+                'image_url': author.image_url
+            }
+    return result
+    
 def create_tweet(args, session: Session):
     try:
         _ = insert_author(args.get("user"), session)

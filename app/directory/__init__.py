@@ -25,3 +25,7 @@ def get_conversation(username, conversation_id):
     return response.json(), response.status_code
 
 
+@app.route('/audience/<string:username>/', methods=['GET'])
+def get_audience(username):
+    response = requests.get(f'{configs.DB_API_URL}/tweets/audience/{username}')
+    return response.json(), response.status_code
